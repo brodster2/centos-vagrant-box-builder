@@ -10,3 +10,4 @@
     - mariadb
     - composer
     - node-yarn
+    - ruby

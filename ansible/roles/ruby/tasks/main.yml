@@ -1,0 +1,32 @@
+- name: Detect rvm binary
+  stat: 
+    path: /home/vagrant/.rvm/bin/rvm
+  register: rvm_binary
+
+- name: Detect rvm installer
+  stat: 
+    path: /tmp/rvm-installer.sh'
+  register: rvm_installer
+
+- name: Install rvm installer
+  get_url:
+    url: https://get.rvm.io
+    dest: /tmp/rvm-installer.sh
+    mode: 0755
+  when: not rvm_binary.stat.exists or not rvm_installer.stat.exists
+
+- name: Import GPG keys
+  command: 'gpg --keyserver hkp://keys.gnupg.net --recv-keys {{ rvm_gpg_keys }}'
+  changed_when: False
+  check_mode: False
+  when: rvm_gpg_keys != ''
+  register: gpg_result
+  until: gpg_result.rc == 0
+  retries: 5
+  delay: 5
+  ignore_errors: True
+
+- name: Install RVM
+  command: /tmp/rvm-installer.sh stable --path /home/vagrant/.rvm
+  when: not rvm_binary.stat.exists
+
