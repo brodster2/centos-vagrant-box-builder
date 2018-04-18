@@ -1,0 +1,6 @@
+**.retry
+ansible.cfg
+**hosts
+**.box
+.vagrant
+**.swp

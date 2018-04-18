@@ -1,0 +1,86 @@
+---
+# This play will install MariaDB and create a "vagrant" dev database
+
+- name: Install MariaDB and dependencies
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+  - mariadb-server
+  - MySQL-python
+  - libselinux-python
+  - libsemanage-python
+  register: maria
+
+- name: Copy over Mysql configuration file
+  copy:
+    src: my.cnf
+    dest: /etc/my.cnf
+
+- name: Create MariaDB log file
+  copy:
+    content: ""
+    dest: /var/log/mysqld.log
+    force: no
+    owner: mysql
+    group: mysql
+    mode: 0644
+
+- name: Start MariaDB Service
+  service:
+    name: mariadb
+    state: started
+    daemon_reload: yes
+    enabled: yes
+
+- name: Set root user password on localhost
+  mysql_user:
+    name: root
+    host: localhost
+    password: root
+    login_user: root
+    login_password:
+    state: present
+  when: maria|changed
+
+- name: Set root user password for other root accounts
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: root
+    check_implicit_admin: yes
+    login_user: root
+    login_password: root
+    state: present
+  with_items:
+    - 127.0.0.1
+    - ::1
+    - "{{ ansible_nodename }}"
+  notify: restart mariadb
+
+- name: Remove anonymous users
+  mysql_user:
+    login_user: root
+    login_password: root
+    name: ""
+    host: "{{ item }}"
+    state: absent
+  with_items:
+    - localhost
+    - 127.0.0.1
+    - ::1
+    - "{{ ansible_nodename }}"
+
+- name: Remove test database
+  mysql_db:
+    login_user: root
+    login_password: root
+    name: test
+    state: absent
+
+- name: Create vagrant database
+  mysql_db:
+    login_user: root
+    login_password: root
+    name: vagrant
+    state: present

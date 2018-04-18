@@ -1,0 +1,17 @@
+---
+- name: Install Nginx
+  yum: 
+    name: nginx 
+    state: present
+
+- name: start and enable nginx
+  systemd:
+      name: nginx
+      state: started
+      enabled: yes
+
+- name: Copy Nginx configuration
+  template:
+      src: default.conf
+      dest: /etc/nginx/conf.d/default.conf
+  notify: Restart Nginx

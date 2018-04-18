@@ -1,0 +1,43 @@
+---
+- name: Install php, php-fpm and dependencies
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php71u
+    - php71u-cli
+    - php71u-common
+    - php71u-fpm
+    - php71u-fpm-nginx
+    - php71u-gd
+    - php71u-json
+    - php71u-mbstring
+    - php71u-mcrypt
+    - php71u-opcache
+    - php71u-pdo
+    - php71u-xml
+    - php71u-xmlrpc
+    - php71u-mysqlnd
+
+- name: Enable php-fpm
+  systemd:
+    state: started
+    enabled: yes
+    name: php-fpm
+
+- name: Disable default php-fpm configuration
+  command: mv /etc/php-fpm.d/www.conf /etc/php-fpm.d/www.old
+    creates=/etc/php-fpm.d/www.old
+
+- name: Copy new php-fpm configuration
+  copy:
+    src: wordpress.conf
+    dest: /etc/php-fpm.d/wordpress.conf
+
+- name: Set cgi.fix_pathinfo=0 in /etc/php.ini
+  lineinfile:
+    path: /etc/php.ini
+    regexp: 'cgi.fix_pathinfo=1$'
+    line: 'cgi.fix_pathinfo=0'
+    state: present
+  notify: Restart php-fpm
