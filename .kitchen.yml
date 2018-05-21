@@ -1,0 +1,31 @@
+---
+driver:
+  name: vagrant
+
+provisioner:
+  hosts: all
+  name: ansible_playbook
+  hosts: test-kitchen
+  playbook: ansible/box.yml
+  roles_path: "/Users/brodie/Projects/centos-vagrant-box-builder/ansible/roles"
+  require_chef_for_busser: false
+
+verifier:
+  name: inspec
+
+platforms:
+  - name: geerlingguy/centos7
+    driver_plugin: vagrant
+    driver_config:
+      network:
+      - ['forwarded_port', {guest: 80, host: 8080}] # Nginx
+      - ['forwarded_port', {guest: 3306, host: 3307}] # MariaDB
+      - ['private_network', {ip: '192.168.33.11'}]
+
+suites:
+  - name: box
+    verifier:
+      inspec_tests:
+        - test/smoke/nginx
+        - test/smoke/php
+    
