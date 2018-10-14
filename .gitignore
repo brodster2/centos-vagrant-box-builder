@@ -4,3 +4,4 @@ ansible.cfg
 **.box
 .vagrant
 **.swp
+venv/
